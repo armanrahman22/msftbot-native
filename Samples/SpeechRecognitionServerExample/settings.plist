@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>luisSubscriptionID</key>
+	<string>35138f71570a46f2a6a005640678f6f5</string>
+	<key>luisAppID</key>
+	<string>a1f200b5-e145-4d01-b122-2662a9dcc434</string>
+	<key>primaryKey</key>
+	<string>1c670fde978241c88e110c1e40ce0fa6</string>
+	<key>authenticationUri</key>
+	<string></string>
+</dict>
+</plist>
