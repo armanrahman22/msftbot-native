@@ -380,7 +380,7 @@ NSString* ConvertSpeechErrorToString(int errorCode);
         [self WriteLine:(@"--- Intent received by onIntentReceived ---")];
         [self WriteLine:(result.Body)];
         [self WriteLine:(@"")];
-        [self placePostRequestWithURL:@"https://40cb4d46.ngrok.io/api/notification"
+        [self placePostRequestWithURL:@"https://40cb4d46.ngrok.io/api/intent"
                              withData:dataToSend
                           withHandler:^(NSURLResponse *response, NSData *rawData, NSError *error) {
                               NSString *string = [[NSString alloc] initWithData:rawData
