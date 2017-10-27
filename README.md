@@ -1,4 +1,12 @@
-# Microsoft Speech API: iOS Speech-to-Text Client Library and Samples
+# Instructions for starting Code8 IOS App 
+- Replace primaryKey with Bing Speech API Key in msftbot-native/Samples/SpeechRecognitionServerExample/settings.plist
+- Everything else can be blank 
+- Replace https://40cb4d46.ngrok.io/api/intent with your own bot's url msftbot-native/Samples/SpeechRecognitionServerExample/SpeechRecognitionServerExample/ViewController.mm
+- Build and run app
+- ** Make sure to start chat from another channel before using the app **
+
+
+# (Instructions for SDK)Microsoft Speech API: iOS Speech-to-Text Client Library and Samples
 
 This repo contains the iOS client library and samples for Speech-to-Text in Microsoft Speech API, an offering within [Microsoft Cognitive Services on Azure](https://azure.microsoft.com/en-us/services/cognitive-services/), formerly known as Project Oxford.
 
