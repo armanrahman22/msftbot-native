@@ -1,4 +1,4 @@
-# Instructions for starting Code8 IOS App 
+# Instructions for starting IOS App 
 - Replace primaryKey with Bing Speech API Key in msftbot-native/Samples/SpeechRecognitionServerExample/settings.plist
 - Everything else can be blank 
 - Replace https://40cb4d46.ngrok.io/api/intent with your own bot's url msftbot-native/Samples/SpeechRecognitionServerExample/SpeechRecognitionServerExample/ViewController.mm
