@@ -59,13 +59,6 @@ NSString* ConvertSpeechErrorToString(int errorCode);
  */
 @implementation ViewController
 
-@synthesize buttonGroup;
-@synthesize micRadioButton;
-@synthesize micDictationRadioButton;
-@synthesize micIntentRadioButton;
-@synthesize dataShortRadioButton;
-@synthesize dataLongRadioButton;
-@synthesize dataShortIntentRadioButton;
 
 /**
  * Gets or sets subscription key
@@ -164,20 +157,6 @@ NSString* ConvertSpeechErrorToString(int errorCode);
     return settings;
 }
 
-/**
- * Gets the current zero-based mode index.
- * @return The current mode index.
- */
--(NSUInteger)modeIndex {
-    for(NSUInteger i = 0; i < self.buttonGroup.count; ++i) {
-        UNIVERSAL_BUTTON* buttonSel = (UNIVERSAL_BUTTON*)self.buttonGroup[i];
-        if (UNIVERSAL_BUTTON_GETCHECKED(buttonSel)) {
-            return i;
-        }
-    }
-
-    return 0;
-}
 
 /**
  * Initialization to be done when app starts.
@@ -185,25 +164,17 @@ NSString* ConvertSpeechErrorToString(int errorCode);
 -(void)viewDidLoad {
     [super viewDidLoad];
 
-    self.buttonGroup = [[NSArray alloc] initWithObjects:micRadioButton, 
-                                                        micDictationRadioButton, 
-                                                        micIntentRadioButton, 
-                                                        dataShortRadioButton, 
-                                                        dataLongRadioButton, 
-                                                        dataShortIntentRadioButton, 
-                                                        nil];
-    [self showMenu:TRUE];
+//    self.buttonGroup = [[NSArray alloc] initWithObjects:micRadioButton,
+//                                                        micDictationRadioButton,
+//                                                        micIntentRadioButton,
+//                                                        dataShortRadioButton,
+//                                                        dataLongRadioButton,
+//                                                        dataShortIntentRadioButton,
+//                                                            nil];
+    [self.quoteText setHidden:false];
     textOnScreen = [NSMutableString stringWithCapacity: 1000];
 }
 
-/**
- * Hides or displays the current mode control.
- * @param show Whether to show or hide the current mode control.
- */
--(void)showMenu:(BOOL)show {
-    [self.radioGroup setHidden:!show];
-    [self.quoteText setHidden:show];
-}
 
 /**
  * Handles the Click event of the startButton control.
@@ -215,15 +186,12 @@ NSString* ConvertSpeechErrorToString(int errorCode);
     [self setText: textOnScreen];
     [[self startButton] setEnabled:NO];
     
-    [self showMenu:FALSE];
 
     [self logRecognitionStart];
 
     if (self.useMicrophone) {
         if (micClient == nil) {
-            if (!self.wantIntent) { 
-                [self WriteLine:(@"--- Start microphone dictation with Intent detection ----")];
-
+            if (!self.wantIntent) {
                 micClient = [SpeechRecognitionServiceFactory createMicrophoneClient:(self.mode)
                                                                        withLanguage:(self.defaultLocale)
                                                                             withKey:(self.subscriptionKey)
@@ -264,7 +232,6 @@ NSString* ConvertSpeechErrorToString(int errorCode);
             dataClient.AuthenticationUri = self.authenticationUri;
         }
 
-        [self sendAudioHelper:self.mode == SpeechRecognitionMode_ShortPhrase ? self.shortWaveFile : self.longWaveFile];
     }
 }
 
@@ -281,55 +248,8 @@ NSString* ConvertSpeechErrorToString(int errorCode);
         recoSource = @"long wav file";
     }
 
-    [self WriteLine:[[NSString alloc] initWithFormat:(@"\n--- Start speech recognition using %@ with %@ mode in %@ language ----\n\n"), 
-        recoSource, 
-        self.mode == SpeechRecognitionMode_ShortPhrase ? @"Short" : @"Long",
-        self.defaultLocale]];
 }
 
-/**
- * Speech recognition with data (for example from a file or audio source).
- * The data is broken up into buffers and each buffer is sent to the Speech Recognition Service.
- * No modification is done to the buffers, so the user can apply their own Silence Detection
- * @param filename The audio file to send.
- */
--(void)sendAudioHelper:(NSString*)filename {
-    NSFileHandle* fileHandle = nil;
-    @try {
-
-        NSBundle* mainResouceArea = [NSBundle mainBundle];
-        NSString* filePathAndName = [mainResouceArea pathForResource:(filename)
-                                                              ofType:(@"wav")];
-        NSURL* fileURL = [[NSURL alloc] initFileURLWithPath:(filePathAndName)];
-
-        fileHandle = [NSFileHandle fileHandleForReadingFromURL:(fileURL)
-                                                         error:(nil)];
-        
-        NSData* buffer;
-        int bytesRead = 0;
-        
-        do {
-            // Get  Audio data to send into byte buffer.
-            buffer = [fileHandle readDataOfLength:(1024)];
-            bytesRead = (int)[buffer length];
-            
-            if (buffer != nil && bytesRead != 0) {
-                // Send of audio data to service.
-                [dataClient sendAudio:(buffer)
-                           withLength:(bytesRead)];
-            }
-        } while (buffer != nil && bytesRead != 0);
-    }
-    @catch(NSException* ex) {
-        NSLog(@"%@", ex);
-    }
-    @finally {
-        [dataClient endAudio];
-        if (fileHandle != nil) {
-            [fileHandle closeFile];
-        }
-    }
-}
 
 /**
  * Called when a final response is received.
@@ -354,14 +274,31 @@ NSString* ConvertSpeechErrorToString(int errorCode);
     
     if (!isFinalDicationMessage) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self WriteLine:(@"********* Final n-BEST Results *********")];
-            for (int i = 0; i < [response.RecognizedPhrase count]; i++) {
-                RecognizedPhrase* phrase = response.RecognizedPhrase[i];
-                [self WriteLine:[[NSString alloc] initWithFormat:(@"[%d] Confidence=%@ Text=\"%@\""), 
-                                  i,
-                                  ConvertSpeechRecoConfidenceEnumToString(phrase.Confidence),
-                                  phrase.DisplayText]];
-            }
+//            [self WriteLine:(response.RecognizedPhrase[0])];
+            RecognizedPhrase* phrase = response.RecognizedPhrase[0];
+            
+            NSDictionary *dataToSend = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        phrase.DisplayText, @"query", nil];
+            
+            [self placePostRequestWithURL:@"https://40cb4d46.ngrok.io/api/intent"
+                                 withData:dataToSend
+                              withHandler:^(NSURLResponse *response, NSData *rawData, NSError *error) {
+                                  NSString *string = [[NSString alloc] initWithData:rawData
+                                                                           encoding:NSUTF8StringEncoding];
+                                  
+                                  NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
+                                  NSInteger code = [httpResponse statusCode];
+                                  NSLog(@"%ld", (long)code);
+                                  
+                                  if (!(code >= 200 && code < 300)) {
+                                      NSLog(@"ERROR (%ld): %@", (long)code, string);
+                                  } else {
+                                      NSLog(@"OK");
+                                      
+                                      NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:
+                                                              string, @"id", nil];
+                                  }
+                              }];
 
             [self WriteLine:(@"")];
         });
@@ -373,32 +310,10 @@ NSString* ConvertSpeechErrorToString(int errorCode);
  * @param result The intent result.
  */
 -(void)onIntentReceived:(IntentResult*) result {
-    NSLog(@"onIntentReceived");
-    NSDictionary *dataToSend = [NSDictionary dictionaryWithObjectsAndKeys:
-                                result.Body, @"message", nil];
     dispatch_async(dispatch_get_main_queue(), ^{
         [self WriteLine:(@"--- Intent received by onIntentReceived ---")];
         [self WriteLine:(result.Body)];
         [self WriteLine:(@"")];
-        [self placePostRequestWithURL:@"https://40cb4d46.ngrok.io/api/intent"
-                             withData:dataToSend
-                          withHandler:^(NSURLResponse *response, NSData *rawData, NSError *error) {
-                              NSString *string = [[NSString alloc] initWithData:rawData
-                                                                       encoding:NSUTF8StringEncoding];
-                              
-                              NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
-                              NSInteger code = [httpResponse statusCode];
-                              NSLog(@"%ld", (long)code);
-                              
-                              if (!(code >= 200 && code < 300)) {
-                                  NSLog(@"ERROR (%ld): %@", (long)code, string);
-                              } else {
-                                  NSLog(@"OK");
-                                  
-                                  NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:
-                                                          string, @"id", nil];
-                              }
-                          }];
     });
 }
 
@@ -430,16 +345,29 @@ NSString* ConvertSpeechErrorToString(int errorCode);
         [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:ourBlock];
     }
 }
+- (NSString *) getDataFrom:(NSString *)url{
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+    [request setHTTPMethod:@"GET"];
+    [request setURL:[NSURL URLWithString:url]];
+    
+    NSError *error = nil;
+    NSHTTPURLResponse *responseCode = nil;
+    
+    NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&responseCode error:&error];
+    
+    if([responseCode statusCode] != 200){
+        NSLog(@"Error getting %@, HTTP status code %i", url, [responseCode statusCode]);
+        return nil;
+    }
+    
+    return [[NSString alloc] initWithData:oResponseData encoding:NSUTF8StringEncoding];
+}
 
 /**
  * Called when a partial response is received
  * @param response The partial result.
  */
 -(void)onPartialResponseReceived:(NSString*) response {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self WriteLine:(@"--- Partial result received by onPartialResponseReceived ---")];
-        [self WriteLine:response];
-    });
 }
 
 /**
@@ -469,7 +397,6 @@ NSString* ConvertSpeechErrorToString(int errorCode);
         if (!recording) {
             [[self startButton] setEnabled:YES];
         }
-        [self WriteLine:[[NSString alloc] initWithFormat:(@"********* Microphone status: %d *********"), recording]];
     });
 }
 
@@ -479,9 +406,7 @@ NSString* ConvertSpeechErrorToString(int errorCode);
 */
 -(void)onSpeakerStatus:(Boolean)speaking
 {
-	dispatch_async(dispatch_get_main_queue(), ^{
-        [self WriteLine:[[NSString alloc] initWithFormat:(@"********* Speaker status: %d *********"), speaking]];
-    });
+
 }
 
 
@@ -495,29 +420,6 @@ NSString* ConvertSpeechErrorToString(int errorCode);
     [self setText:textOnScreen];
 }
 
-/**
- * Event handler for when the current mode has changed.
- * @param sender The sending caller.
- */
--(IBAction)RadioButton_Click:(id)sender {
-    NSUInteger index = [self.buttonGroup indexOfObject:sender];
-    for(NSUInteger i = 0; i < self.buttonGroup.count; ++i) {
-        UNIVERSAL_BUTTON* buttonSel = (UNIVERSAL_BUTTON*)self.buttonGroup[i];
-        UNIVERSAL_BUTTON_SETCHECKED(buttonSel, (index == i) ? TRUE : FALSE);
-    }
-
-    if (micClient != nil) {
-        [micClient finalize];
-        micClient = nil;
-    }
-
-    if (dataClient != nil) {
-        [dataClient finalize];
-        dataClient = nil;
-    }
-
-    [self showMenu:FALSE];
-}
 
 /**
  * Converts an integer error code to an error string.
@@ -569,13 +471,6 @@ NSString* ConvertSpeechRecoConfidenceEnumToString(Confidence confidence) {
     }
 }
 
-/**
- * Event handler for when the user wants to display the list of modes.
- * @param sender The sending caller.
- */
--(IBAction)ChangeModeButton_Click:(id)sender {
-    [self showMenu:TRUE];
-}
 
 /**
  * Action for low memory

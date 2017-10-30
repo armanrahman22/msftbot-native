@@ -28,19 +28,11 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEAL
     MicrophoneRecognitionClient* micClient;
 }
 
-@property(nonatomic, strong) IBOutlet UNIVERSAL_VIEW*   radioGroup;
 @property(nonatomic, strong) IBOutlet UNIVERSAL_BUTTON* startButton;
-@property(nonatomic, strong) IBOutlet UNIVERSAL_BUTTON* micRadioButton;
-@property(nonatomic, strong) IBOutlet UNIVERSAL_BUTTON* micDictationRadioButton;
-@property(nonatomic, strong) IBOutlet UNIVERSAL_BUTTON* micIntentRadioButton;
-@property(nonatomic, strong) IBOutlet UNIVERSAL_BUTTON* dataShortRadioButton;
-@property(nonatomic, strong) IBOutlet UNIVERSAL_BUTTON* dataLongRadioButton;
-@property(nonatomic, strong) IBOutlet UNIVERSAL_BUTTON* dataShortIntentRadioButton;
 @property (nonatomic, strong) IBOutlet UNIVERSAL_TEXTVIEW* quoteText;
 
 -(IBAction)StartButton_Click:(id)sender;
--(IBAction)RadioButton_Click:(id)sender;
--(IBAction)ChangeModeButton_Click:(id)sender;
+
 
 @end
 
